@@ -1,76 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Price Estimation - PistonCup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimación de Precio de Coche - PistonCup</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1 class="title">Price Estimation</h1>
-        <h2 class="subtitle">Discover the estimated market value of your vehicle</h2>
+        <h1 class="title">Estimación de Precio de Coche</h1>
+        <h2 class="subtitle">Descubre el valor de mercado estimado de tu vehículo</h2>
+
+        {% if error_message %}
+            <p class="error-message">{{ error_message }}</p>
+        {% endif %}
 
         <form method="post" style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
 
-            <input type="text" name="Manufacturer" placeholder="Brand" required>
-            <input type="text" name="Model" placeholder="Model" required>
-            <input type="number" name="Prod_year" placeholder="Year of Manufacture" required>
-            <input type="number" name="Mileage" placeholder="Total Mileage (km)" required>
-            <input type="number" name="Engine_volume" placeholder="Power (hp)" required>
+            <label for="make">Marca:</label>
+            <input type="text" id="make" name="make" placeholder="Ej: BMW" required>
 
-            <select name="Fuel_type" required>
-                <option disabled selected>Select Fuel Type</option>
-                <option>Hybrid</option>
-                <option>Diesel</option>
-                <option>LPG</option>
-                <option>Petrol</option>
-                <option>CNG</option>
-                <option>Plug-in Hybrid</option>
-                <option>Hydrogen</option>
-            </select>
-            <select name="Gear_box_type" required>
-                <option disabled selected>Select Gearbox Type</option>
-                <option>Automatic</option>
-                <option>Tiptronic</option>
-                <option>Manual</option>
-                <option>Variator</option>
-            </select>
-            <div class="form-group">
-                <label for="category">Car Category:</label>
-                <select name="Category" required>
-                    <option value="Sedan">Sedan</option>
-                    <option value="Jeep">Jeep</option>
-                    <option value="Hatchback">Hatchback</option>
-                    <option value="Microbus">Microbus</option>
-                    <option value="Goods wagon">Goods wagon</option>
-                    <option value="Coupe">Coupe</option>
-                    <option value="Minivan">Minivan</option>
-                    <option value="Universal">Universal</option>
-                    <option value="Pickup">Pickup</option>
-                    <option value="Cabriolet">Cabriolet</option>
-                    <option value="Limousine">Limousine</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="leather">Leather Interior:</label>
-                <select name="Leather_interior" required>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                </select>
-            </div>
+            <label for="model">Modelo:</label>
+            <input type="text" id="model" name="model" placeholder="Ej: Serie 3" required>
 
-            <button type="submit" class="feature-card">Estimate Price</button>
+            <label for="year">Año de Fabricación:</label>
+            <input type="number" id="year" name="year" placeholder="Ej: 2020" min="1900" max="2025" required>
+
+            <label for="engine">Tamaño del Motor (Litros):</label>
+            <input type="number" id="engine" name="engine" placeholder="Ej: 2.0" step="0.1" required>
+
+            <label for="cylinders">Cilindros (opcional):</label>
+            <input type="number" id="cylinders" name="cylinders" placeholder="Ej: 4" min="3" max="12">
+
+            <label for="fuel">Tipo de Combustible:</label>
+            <input type="text" id="fuel" name="fuel" placeholder="Ej: Gasolina, Diésel, Híbrido, Eléctrico" required>
+                <!-- Asegúrate de que estas opciones coincidan con las categorías de tu entrenamiento -->
+            </select>
+
+            <label for="mileage">Kilometraje (km):</label>
+            <input type="number" id="mileage" name="mileage" placeholder="Ej: 50000" required>
+
+            <label for="transmission">Transmisión:</label>
+            <input type="text" id="transmission" name="transmission" placeholder="Ej: Automatic" required>
+
+            <label for="trim">Versión/Acabado (opcional):</label>
+            <input type="text" id="trim" name="trim" placeholder="Ej: M Sport, Avantgarde">
+
+            <label for="body">Tipo de Carrocería:</label>
+            <input type="text" id="body" name="body" placeholder="Ej: Sedan, SUV, Hatchback" required>
+
+            <label for="doors">Número de Puertas:</label>
+            <input type="number" id="doors" name="doors" placeholder="Ej: 5" min="2" max="7" required>
+
+            <label for="exterior_color">Exterior Color:</label>
+            <input type="text" id="exterior_color" name="exterior_color" placeholder="Ej: Negro, Blanco, Azul" required>
+
+            <label for="interior_color">Interior Color:</label>
+            <input type="text" id="interior_color" name="interior_color" placeholder="Ej: Gris, Beige, Negro" required>
+
+            <label for="drivetrain">Traction type:</label>
+            <select id="drivetrain" name="drivetrain" required>
+                <option disabled selected value="">Select traction type</option>
+                <option value="Front-wheel Drive">Front-wheel Drive</option>
+                <option value="Rear-wheel Drive">Rear-wheel Drive</option>
+                <option value="All-wheel Drive">All-wheel Drive</option>
+                <option value="Four-wheel Drive">Four-wheel Drive</option>
+                <!-- Asegúrate de que estas opciones coincidan con las categorías de tu entrenamiento -->
+            </select>
+
+            <button type="submit" class="feature-card">Estimar Precio</button>
         </form>
 
-        {% if prediction %}
-            <div style="margin-top: 40px;">
-                <h2 class="subtitle">Estimated Price: <strong>€{{ prediction }}</strong></h2>
-                <p><strong>{{ data.Manufacturer }} {{ data.Model }}</strong>, Year: {{ data.Prod_year }}, Mileage: {{ data.Mileage }} km</p>
+        {% if predicted_price %}
+            <div class="result">
+                <h2>Precio Estimado:</h2>
+                <p class="price">{{ "%.2f"|format(predicted_price) }} €</p>
             </div>
         {% endif %}
 
         <div style="margin-top: 30px;">
-            <a href="/" class="feature-card">← Back to Home</a>
+            <a href="/" class="feature-card">← Volver a Inicio</a>
         </div>
     </div>
 </body>
