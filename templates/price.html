@@ -8,8 +8,8 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="title">Estimación de Precio de Coche</h1>
-        <h2 class="subtitle">Descubre el valor de mercado estimado de tu vehículo</h2>
+        <h1 class="title">Price Car Estimator</h1>
+        <h2 class="subtitle">Discover the estimated market value of your vehicle.</h2>
 
         {% if error_message %}
             <p class="error-message">{{ error_message }}</p>
@@ -17,39 +17,39 @@
 
         <form method="post" style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px;">
 
-            <label for="make">Marca:</label>
+            <label for="make">Brand:</label>
             <input type="text" id="make" name="make" placeholder="Ej: BMW" required>
 
-            <label for="model">Modelo:</label>
+            <label for="model">Model:</label>
             <input type="text" id="model" name="model" placeholder="Ej: Serie 3" required>
 
-            <label for="year">Año de Fabricación:</label>
+            <label for="year">Year of manufacture:</label>
             <input type="number" id="year" name="year" placeholder="Ej: 2020" min="1900" max="2025" required>
 
-            <label for="engine">Tamaño del Motor (Litros):</label>
+            <label for="engine">Engine Size (Liter):</label>
             <input type="number" id="engine" name="engine" placeholder="Ej: 2.0" step="0.1" required>
 
-            <label for="cylinders">Cilindros (opcional):</label>
+            <label for="cylinders">Cylinders (optional):</label>
             <input type="number" id="cylinders" name="cylinders" placeholder="Ej: 4" min="3" max="12">
 
-            <label for="fuel">Tipo de Combustible:</label>
+            <label for="fuel">Fuel type:</label>
             <input type="text" id="fuel" name="fuel" placeholder="Ej: Gasolina, Diésel, Híbrido, Eléctrico" required>
-                <!-- Asegúrate de que estas opciones coincidan con las categorías de tu entrenamiento -->
+                
             </select>
 
-            <label for="mileage">Kilometraje (km):</label>
+            <label for="mileage">Mileage (km):</label>
             <input type="number" id="mileage" name="mileage" placeholder="Ej: 50000" required>
 
-            <label for="transmission">Transmisión:</label>
+            <label for="transmission">Transmision:</label>
             <input type="text" id="transmission" name="transmission" placeholder="Ej: Automatic" required>
 
-            <label for="trim">Versión/Acabado (opcional):</label>
+            <label for="trim">Trim (optional):</label>
             <input type="text" id="trim" name="trim" placeholder="Ej: M Sport, Avantgarde">
 
-            <label for="body">Tipo de Carrocería:</label>
+            <label for="body">Body Type:</label>
             <input type="text" id="body" name="body" placeholder="Ej: Sedan, SUV, Hatchback" required>
 
-            <label for="doors">Número de Puertas:</label>
+            <label for="doors">Number of doors:</label>
             <input type="number" id="doors" name="doors" placeholder="Ej: 5" min="2" max="7" required>
 
             <label for="exterior_color">Exterior Color:</label>
@@ -65,21 +65,21 @@
                 <option value="Rear-wheel Drive">Rear-wheel Drive</option>
                 <option value="All-wheel Drive">All-wheel Drive</option>
                 <option value="Four-wheel Drive">Four-wheel Drive</option>
-                <!-- Asegúrate de que estas opciones coincidan con las categorías de tu entrenamiento -->
+                
             </select>
 
-            <button type="submit" class="feature-card">Estimar Precio</button>
+            <button type="submit" class="feature-card">Estimate price</button>
         </form>
 
         {% if predicted_price %}
             <div class="result">
-                <h2>Precio Estimado:</h2>
+                <h2>Estimate price:</h2>
                 <p class="price">{{ "%.2f"|format(predicted_price) }} €</p>
             </div>
         {% endif %}
 
         <div style="margin-top: 30px;">
-            <a href="/" class="feature-card">← Volver a Inicio</a>
+            <a href="/" class="feature-card">← Back</a>
         </div>
     </div>
 </body>

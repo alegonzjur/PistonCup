@@ -13,7 +13,7 @@ The goal of the app is verify how much can ML algorithms predict prices of cars 
 Python is the main language used in this project. The main libraries used are:
 
 - Pandas, Matplotlib, Seaborn are used to data analysis.
-- LightGBM (currently) is responsible to generate predictions.
+- LightGBM is responsible to generate predictions.
 - Flask is the application support of the algorithm.
   
 The environment is available on the repository to use it. (Model/ML.yml).
@@ -25,4 +25,4 @@ To install it, download the .yml file, open Anaconda Prompt and write:
 
 ## Authors
 
-- [@alegonzjur](https://www.github.comalegonzjur)
+- [@alegonzjur](https://www.github.com/alegonzjur)

@@ -1,96 +1,126 @@
-# App integration module
+# Library imports.
+from flask import Flask, render_template, request, jsonify
+import pickle
+import pandas as pd 
+import numpy as np
+import lightgbm as lgb
 
-from flask import Flask, render_template, request, url_for
-import pickle 
-import numpy as np         
-import pandas as pd
-from datetime import datetime              
-
-
+# Initialize the Flask application.
 app = Flask(__name__)
 
-# Loading model & encoder.
-with open('model/model.pkl', 'rb') as f: 
-    model = pickle.load(f)
-with open('model/encoder.pkl', 'rb') as f:
-    encoder = pickle.load(f)
+# Loading the model.
+try:
+    with open('./model/lgbm_model.pkl', 'rb') as f:
+        model = pickle.load(f)
+    with open('./model/preprocessor_data.pkl', 'rb') as f:
+        preprocessor_data = pickle.load(f)
+    # Load preprocessor data.   
+    expected_columns = preprocessor_data['expected_columns']
+    mode_cylinders = preprocessor_data['mode_cylinders']
+    categorical_features_info = preprocessor_data['categorical_features_info']
+    lgbm_categorical_features = preprocessor_data['lgbm_categorical_features']
+    
+     # Creating a DF.
+    reference_df_for_categories = pd.DataFrame(columns=expected_columns)
+    for col in lgbm_categorical_features:
+        if col in categorical_features_info:
+            reference_df_for_categories[col] = pd.Categorical([], categories=categorical_features_info[col])
+            
+    print("Model and preprocessor data loaded successfully.")
+
+# Loading the dataset to make recommendations.
+    dataset_path = './data/Vehicle Price.csv'
+    original_cars_df = pd.read_csv(dataset_path)
+# Applying the same preprocessing as the model.
+    if 'cylinders' in original_cars_df.columns:
+        original_cars_df['cylinders'] = original_cars_df['cylinders'].replace(0.0, np.nan)
+    if 'description' in original_cars_df.columns:
+        original_cars_df = original_cars_df.drop('description', axis=1)
+    print(f'Dataset loaded successfully with {len(original_cars_df)} records.')
+except Exception as e:
+    print(f"Error loading model or preprocessor data: {e}")
+    model = None
+    original_cars_df = None
 
 
-fueltype = ['Hybrid','Diesel','LPG','Petrol','CNG','Plug-in Hybrid','Hydrogen']
-gearbox = ['Automatic','Tiptronic','Manual','Variator']
-# manufacturer = ['TOYOTA','CHEVROLET','MERCEDES-BENZ','BMW','LEXUS','HONDA','FORD', 'DAEWOO','HYUNDAI','SSANGYONG','VOLKSWAGEN','SUBARU','SUZUKI','FIAT',
-#  'NISSAN','OPEL','KIA','ALFA ROMEO','MITSUBISHI','JEEP','DODGE','MAZDA','CADILLAC','VAZ','LAND ROVER','AUDI','RENAULT','SKODA','PORSCHE','CHRYSLER','JAGUAR',
-#  'MINI','LINCOLN','ACURA','HUMMER','DAIHATSU','UAZ','BUICK','SCION','CITROEN','INFINITI','GMC','GAZ','PEUGEOT','VOLVO','TESLA','SEAT','ASTON MARTIN',
-#  'ROVER','LAMBORGHINI','ISUZU','BENTLEY','HAVAL','ROLLS-ROYCE','MERCURY','MASERATI','SAAB','სხვა','MOSKVICH','ZAZ','FERRARI','SATURN','PONTIAC','GREATWALL']
-
-# Main Route / Introduction
+# Define the home route.
 @app.route("/")
 def home():
      return render_template('index.html')
  
-# Price Stimator Route.
-@app.route("/price", methods=['GET','POST'])
+# Define the price estimation route.
+@app.route("/price", methods=['GET', 'POST'])
 def price():
-    # Recollecting data from form.
+    predicted_price = None 
+    error_message = None
+    # If the model is not loaded, return an error message.
+    if model is None:
+        error_message = "Model is not loaded. Please try again later."
+        return render_template('price.html', prediction=predicted_price, error=error_message)
+    
     if request.method == 'POST':
-        input_data = {
-            'Manufacturer' : request.form['Manufacturer'],
-            'Model' : request.form['Model'],
-            'Prod_year' : int(request.form['Prod_year']),
-            'Mileage' : int(request.form['Mileage']),
-            'Fuel_type' : request.form['Fuel_type'],
-            'Gear_box_type' : request.form['Gear_box_type'],
-            'Engine_volume' : float(request.form['Engine_volume']),
-            'Leather_interior' : request.form['Leather_interior'],
-            'Category' : request.form['Category']
+        try:
+            # Collecting data from the form.
+            car_data = {
+                'make' : request.form['make'],
+                'model' : request.form['model'],
+                'year' : int(request.form['year']),
+                'engine' : float(request.form['engine']),
+                'cylinders' : int(request.form['cylinders']),
+                'fuel' : request.form['fuel'],
+                'mileage' : int(request.form['mileage']),
+                'transmission' : request.form['transmission'],
+                'trim' : request.form['trim'],
+                'body' : request.form['body'],
+                'doors' : int(request.form['doors']),
+                'exterior_color' : request.form['exterior_color'],
+                'interior_color' : request.form['interior_color'],
+                'drivetrain' : request.form['drivetrain']
+            }
+            # Creating a DataFrame from the input data.
+            input_df = pd.DataFrame([car_data])
+            # Checking that the dataframe has the expected columns.
+            try:
+                input_df = input_df[expected_columns]
+            except KeyError as e:
+                raise KeyError(f"Missing expected column: {e}")
+            # Impute cylinders if not provided.
+            if 'cylinders' in input_df.columns and input_df['cylinders'].isnull().any():
+                input_df['cylinders'] = input_df['cylinders'].replace(0, np.nan)
+                input_df['cylinders'].fillna(mode_cylinders, inplace=True)
+                input_df['cylinders'] = input_df['cylinders'].astype(int)
+            # Ensure categorical columns are treated as categories.
+            for col in lgbm_categorical_features:
+                if col in input_df.columns:
+                    if col in reference_df_for_categories.columns:
+                        input_df[col] = pd.Categorical(input_df[col], categories=reference_df_for_categories[col].cat.categories)
+                    else:
+                        pass
+            # Making predictions.
+            predicted_price = model.predict(input_df)[0]
+        except ValueError as e:
+            error_message = f"Invalid input data: {e}"
+        except Exception as e:
+            error_message = f"An error occurred while making the prediction: {e}"
+    return render_template('price.html', predicted_price=predicted_price, error_message=error_message)
+
+# Recommendation route. In works.
+# @app.route("/recommend_car", methods=['GET','POST'])
+# def recommend_car():
+#     recommend_cars = []
+#     error_message = None
+#     # If the model is not loaded, return an error message.
+#     if original_cars_df is None:
+#         error_message = 'Internal error. Car catalog is not available.'
+#         return render_template('recommendation.html', recommend_cars=recommend_cars, error_message=error_message)
+#     # Collecting information for the car.
+#     if request.method == 'POST':
+#         try:
+#             budget = float(request.form['max_budget'])
+#             age = 
+             
             
-        }
-        # Feature engineering
-        current_year = datetime.now().year
-        input_df = pd.DataFrame([input_data])
-        input_df['Car_Age'] = current_year - input_df['Prod_year']
-        input_df['KmYearly'] = input_df['Mileage'] / input_df['Car_Age'].replace(0,1)
-        
-        # Categorical encoding.
-        input_df_encoded = encoder.transform(input_df)
-        
-        # Prediction
-        pred_log = model.predict(input_df_encoded)[0]
-        pred_price = np.expm1(pred_log)
-        
-        return render_template('price.html', prediction=int(pred_price), data=input_data)
-    
-    return render_template('price.html',prediction=None)
 
-# Car recommendation route.
-@app.route('/recommender', methods=['GET','POST'])
-def recommender():
-    df = pd.read_csv('data/test.csv')
-    if request.method == 'POST':
-        budget = int(request.form['budget'])
-        max_age = int(request.form['max_age'])
-        fuel = request.form['fuel']
-        gearbox = request.form['gearbox']
-        
-        current_year = datetime.now().year
-        df["car_age"] = current_year - df["Prod_year"]
-        
-        # Doing filters
-        filtered_df = df[
-            (df['Price'] <= budget) &
-            (df['car_age'] <= max_age) &
-            (df['Fuel_type'] == fuel) &
-            (df['Gear_box_type'] == gearbox)
-        ]
-        
-        if not filtered_df.empty:
-            recommendation = filtered_df.sort_values(by=['Mileage','Engine_volume']).iloc[0].to_dict()
-        else:
-            recommendation = None
-        
-        return render_template('recommendation.html', recommendation=recommendation, criteria=request.form)
-    
-    return render_template('recommendation.html', recommendation=None)
-
-if __name__ == '__main__':
+# Debugging.
+if __name__ == "__main__":
     app.run(debug=True)
